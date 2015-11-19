@@ -1,23 +1,23 @@
 import os
 
-print("Starting separator: \n")
+print("Starting separator: \n" + "It's goint to take some time.... \n")
 
-my_path = "../dataset"
+dataset_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'dataset'))
 new_path = "chunks"
-chunk_dir = os.path.join(my_path,new_path)
+chunk_dir = os.path.join(dataset_path, new_path)
 
-files = [f for f in os.listdir(my_path) if os.path.isfile(os.path.join(my_path, f))]
+files = [f for f in os.listdir(dataset_path) if os.path.isfile(os.path.join(dataset_path, f))]
 
 for f in files:
-    if f == 'test_review.json':
+    if f == 'yelp_academic_dataset_review.json':
         if not os.path.exists(chunk_dir):
             os.makedirs(chunk_dir)
 
-        chunk_size = 4
+        chunk_size = 1000
         smallfile = None
         fid = 0
 
-        with open(os.path.join(my_path, f)) as bigfile:
+        with open(os.path.join(dataset_path, f)) as bigfile:
             for lineno, line in enumerate(bigfile):
                 if lineno % chunk_size == 0:
                     if smallfile:

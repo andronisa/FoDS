@@ -27,6 +27,10 @@ system_deps:
 	./scripts/install_system_dependencies.sh
 
 
+separate_review:
+	python scripts/separator.py
+
+
 clean:
 	find . -name "*.pyc" -exec rm -rf {} \;
 	@echo "done"
