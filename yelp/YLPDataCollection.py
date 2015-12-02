@@ -20,7 +20,6 @@ class DBConnector:
         self.__dbName = db_name
 
     def connect(self):
-        print(self.database_path)
         if self.database_path is None:
             return False
 
