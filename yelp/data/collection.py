@@ -3,6 +3,12 @@ import json
 import os.path
 import logging
 
+
+CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '..', 'config'))
+LOG_PATH = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '..', 'logs'))
+DATASET_PATH = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '..', 'dataset'))
+
+
 """
     Attributes:
     __config_path: string; keep relative path to the config file
@@ -116,6 +122,8 @@ class DBCoordinator:
         res = []
         cursor = self.db.find(predicate)
         for obj in cursor:
+
+
             res.append(obj)
 
         return res
@@ -175,14 +183,14 @@ class DataReader:
 class SimpleDataImporter:
 
     def __init__(self, loggingEnable=False):
-        self.__dbConnector = DBConnector('../config/config.json',)
+        self.__dbConnector = DBConnector(os.path.join(CONFIG_PATH, 'config.json'),)
         self.__dbConnector.connect()
         self.__db = self.__dbConnector.get_database_name('yelp', 'data')
-        logging.basicConfig(filename='../logs/import.log', level=logging.INFO, filemode='w')
+        logging.basicConfig(filename=os.path.join(LOG_PATH,'import.log'), level=logging.INFO, filemode='w')
         logging.info('Connected to MongoDB')
 
     def run(self, file_name, cleanImport=False):
-        dataReader = DataReader('../dataset')
+        dataReader = DataReader(DATASET_PATH)
         if dataReader.fileExists(file_name) and (self.__db != None):
             if cleanImport: self.__dbConnector.reset_database_name('yelp', 'data')
             self.__db.openBulk()
@@ -199,9 +207,3 @@ class SimpleDataImporter:
     def finish(self):
         self.__dbConnector.disconnect()
         logging.info('Data has been imported.')
-
-
-
-
-
-

@@ -1,5 +1,5 @@
 *.pyc
 .idea/
 .DS_Store
-dataset/*
-logs/*
+.download_cache/*
+config/alchemy_key.txt

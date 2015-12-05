@@ -1,4 +1,4 @@
-from YLPDataCollection import *
+from data.collection import SimpleDataImporter
 
 def main(*agrs):
     dataset_name = None
