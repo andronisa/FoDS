@@ -1,13 +1,12 @@
-from pymongo import MongoClient
 import json
 import os.path
 import logging
+import re
+from pymongo import MongoClient
 
-
-CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '..', 'config'))
-LOG_PATH = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '..', 'logs'))
-DATASET_PATH = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '..', 'dataset'))
-
+CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config'))
+LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))
+DATASET_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'dataset'))
 
 """
     Attributes:
@@ -15,6 +14,7 @@ DATASET_PATH = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '
     __isConnected: boolean; show status of database client connection
     __db: YLPDBCoordinator
 """
+
 
 class DBConnector:
     def __init__(self, config_path, db_name='test'):
@@ -56,7 +56,7 @@ class DBConnector:
         key = db_name + ':' + collection_name
         db = self.__databases.get(key, None)
         if db == None:
-            #create new coordinator and save to databases dic
+            # create new coordinator and save to databases dic
             newDB = self.__client[db_name][collection_name]
             coordinator = DBCoordinator(newDB)
             db = coordinator
@@ -81,6 +81,7 @@ class DBConnector:
     Attributes:
     __client: MongoClient
 """
+
 
 class DBCoordinator:
     def __init__(self, db):
@@ -122,8 +123,6 @@ class DBCoordinator:
         res = []
         cursor = self.db.find(predicate)
         for obj in cursor:
-
-
             res.append(obj)
 
         return res
@@ -138,7 +137,6 @@ class DBCoordinator:
 
 
 class DataReader:
-
     def __init__(self, read_dir, write_dir='./'):
         self.__readDir = read_dir
         self.__writeDir = write_dir
@@ -160,7 +158,6 @@ class DataReader:
     def fileExists(self, file_name):
         return os.path.exists(self.appendStringWithPath(self.readDir, file_name))
 
-
     def appendStringWithPath(self, s1, s2):
         return s1 + '/' + s2
 
@@ -180,19 +177,20 @@ class DataReader:
     def writeDir(self, dr):
         self.__writeDir = dr
 
-class SimpleDataImporter:
 
+class SimpleDataImporter:
     def __init__(self, loggingEnable=False):
-        self.__dbConnector = DBConnector(os.path.join(CONFIG_PATH, 'config.json'),)
+        self.__dbConnector = DBConnector(os.path.join(CONFIG_PATH, 'config.json'), )
         self.__dbConnector.connect()
         self.__db = self.__dbConnector.get_database_name('yelp', 'data')
-        logging.basicConfig(filename=os.path.join(LOG_PATH,'import.log'), level=logging.INFO, filemode='w')
+        logging.basicConfig(filename=os.path.join(LOG_PATH, 'import.log'), level=logging.INFO, filemode='w')
         logging.info('Connected to MongoDB')
 
-    def run(self, file_name, cleanImport=False):
+    def run(self, file_name, collection_name, cleanImport=False):
+        pass
         dataReader = DataReader(DATASET_PATH)
         if dataReader.fileExists(file_name) and (self.__db != None):
-            if cleanImport: self.__dbConnector.reset_database_name('yelp', 'data')
+            if cleanImport: self.__dbConnector.reset_database_name('yelp', collection_name)
             self.__db.openBulk()
             logging.info('Open bulk for inserting data')
             dataReader.readFile(file_name, self.readCallback)
@@ -207,3 +205,16 @@ class SimpleDataImporter:
     def finish(self):
         self.__dbConnector.disconnect()
         logging.info('Data has been imported.')
+
+    @staticmethod
+    def get_collection_name(dataset_name=None):
+        if not dataset_name:
+            return 'data'
+
+        rep = {"yelp_academic_dataset_": "", ".json": ""}
+
+        rep = dict((re.escape(k), v) for k, v in rep.iteritems())
+        pattern = re.compile("|".join(rep.keys()))
+        collection_name = pattern.sub(lambda m: rep[re.escape(m.group(0))], dataset_name)
+
+        return collection_name
