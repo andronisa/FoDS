@@ -10,8 +10,12 @@ def main():
         print ('usage: main.py <inputfile>')
         #sys.exit(2)
 
+    collection_name = SimpleDataImporter.get_collection_name(dataset_name)
+    print collection_name
+
     simpleImporter = SimpleDataImporter()
-    simpleImporter.run(dataset_name, True)
+    simpleImporter.run(dataset_name, collection_name, True)
     simpleImporter.finish()
+
 
 if __name__ == '__main__': main()
