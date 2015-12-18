@@ -38,9 +38,15 @@ class DBConnector:
         host = config['db']['host']
         port = config['db']['port']
         url = "mongodb://{}:{}".format(host, port)
-        self.__client = MongoClient(url)
-        self.__isConnected = True
+        try:
+            self.__client = MongoClient(url)
+        except BaseException as e:
+            logging.fatal('Cannot connect to mongoDB at host: {}, port: {} with err: {}.'.format(host, port, e))
 
+        if self.__client is None:
+            return False
+
+        self.__isConnected = True
         return self.__isConnected
 
     def disconnect(self):
@@ -55,7 +61,7 @@ class DBConnector:
 
         key = db_name + ':' + collection_name
         db = self.__databases.get(key, None)
-        if db == None:
+        if db is None:
             #create new coordinator and save to databases dic
             newDB = self.__client[db_name][collection_name]
             coordinator = DBCoordinator(newDB)
@@ -83,21 +89,30 @@ class DBConnector:
 """
 
 class DBCoordinator:
-    def __init__(self, db):
+    def __init__(self, db, bulk_limit=100):
         self.__db = db
         self.__bulk = None
+        self.__bulkLimit = bulk_limit
+        self.__currentCount = 0
 
     def openBulk(self):
-        self.__bulk = self.db.initialize_unordered_bulk_op()
+        if self.__bulk is None:
+            self.__bulk = self.db.initialize_unordered_bulk_op()
 
     def addToBulk(self, obj):
         self.__bulk.insert(obj)
+        self.__currentCount += 1
+        if self.__currentCount > self.__bulkLimit:
+            self.closeBulk()
+            self.__currentCount = 0
+            self.openBulk()
 
     def closeBulk(self):
-        return self.__bulk.execute()
+        res = self.__bulk.execute()
+        self.__bulk = None
+        return res
 
     def addObject(self, obj):
-        print(type(obj))
         return self.addObjects([obj])
 
     def removeObject(self, objId):

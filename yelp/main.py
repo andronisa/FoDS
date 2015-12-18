@@ -1,11 +1,14 @@
 from data.collection import SimpleDataImporter
+import sys
 
-def main(*agrs):
-    dataset_name = None
-    if len(agrs) > 0:
-        dataset_name = agrs[0]
-    else:
-        dataset_name = 'yelp_academic_dataset_user.json'
+def main():
+    dataset_name = 'yelp_academic_dataset_user.json'
+
+    try:
+        dataset_name = sys.argv[1]
+    except BaseException as e:
+        print ('usage: main.py <inputfile>')
+        #sys.exit(2)
 
     simpleImporter = SimpleDataImporter()
     simpleImporter.run(dataset_name, True)
