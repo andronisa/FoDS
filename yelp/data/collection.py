@@ -194,17 +194,20 @@ class DataReader:
 
 
 class SimpleDataImporter:
-    def __init__(self, loggingEnable=False):
+    def __init__(self, collection_name='data', loggingEnable=False):
         self.__dbConnector = DBConnector(os.path.join(CONFIG_PATH, 'config.json'), )
         self.__dbConnector.connect()
-        self.__db = self.__dbConnector.get_database_name('yelp', 'data')
+        self.__collection_name = collection_name
+        self.__db = self.__dbConnector.get_database_name('yelp', self.__collection_name)
+
         logging.basicConfig(filename=os.path.join(LOG_PATH, 'import.log'), level=logging.INFO, filemode='w')
         logging.info('Connected to MongoDB')
 
-    def run(self, file_name, collection_name, cleanImport=False):
+    def run(self, file_name, cleanImport=False):
         dataReader = DataReader(DATASET_PATH)
         if dataReader.fileExists(file_name) and (self.__db != None):
-            if cleanImport: self.__dbConnector.reset_database_name('yelp', collection_name)
+            if cleanImport:
+                self.__dbConnector.reset_database_name('yelp', self.__collection_name)
             self.__db.openBulk()
             logging.info('Open bulk for inserting data')
             dataReader.readFile(file_name, self.readCallback)
