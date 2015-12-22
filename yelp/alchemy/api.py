@@ -15,7 +15,6 @@
 #   limitations under the License.
 
 from __future__ import print_function
-
 import os
 import requests
 
@@ -34,9 +33,7 @@ except ImportError:
     # Older versions of Python (i.e. 2.4) require simplejson instead of json
     import simplejson as json
 
-
-CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..','..', 'config'))
-
+CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config'))
 
 if __name__ == '__main__':
     """
@@ -52,6 +49,7 @@ if __name__ == '__main__':
     """
 
     import sys
+
     if len(sys.argv) == 2 and sys.argv[1]:
         if len(sys.argv[1]) == 40:
             print(CONFIG_PATH)
@@ -130,7 +128,7 @@ class AlchemyAPI:
     ENDPOINTS['imagetagging']['image'] = '/image/ImageGetRankedImageKeywords'
     ENDPOINTS['facetagging'] = {}
     ENDPOINTS['facetagging']['url'] = '/url/URLGetRankedImageFaceTags'
-    ENDPOINTS['facetagging']['image'] = '/image/ImageGetRankedImageFaceTags'    
+    ENDPOINTS['facetagging']['image'] = '/image/ImageGetRankedImageFaceTags'
     ENDPOINTS['taxonomy'] = {}
     ENDPOINTS['taxonomy']['url'] = '/url/URLGetRankedTaxonomy'
     ENDPOINTS['taxonomy']['html'] = '/html/HTMLGetRankedTaxonomy'
@@ -766,7 +764,7 @@ class AlchemyAPI:
         post_url = ""
         try:
             post_url = AlchemyAPI.BASE_URL + endpoint + \
-                '?' + urlencode(params).encode('utf-8')
+                       '?' + urlencode(params).encode('utf-8')
         except TypeError:
             post_url = AlchemyAPI.BASE_URL + endpoint + '?' + urlencode(params)
 

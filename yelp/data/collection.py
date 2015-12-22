@@ -62,7 +62,7 @@ class DBConnector:
         key = db_name + ':' + collection_name
         db = self.__databases.get(key, None)
         if db is None:
-            #create new coordinator and save to databases dic
+            # create new coordinator and save to databases dic
             newDB = self.__client[db_name][collection_name]
             coordinator = DBCoordinator(newDB)
             db = coordinator
@@ -81,6 +81,9 @@ class DBConnector:
     @database_path.setter
     def database_path(self, path):
         self.__config_path = path
+
+    def get_client(self):
+        return self.__client
 
 
 """
@@ -235,3 +238,29 @@ class SimpleDataImporter:
         collection_name = pattern.sub(lambda m: rep[re.escape(m.group(0))], dataset_name)
 
         return collection_name
+
+
+class MongoQuery:
+    def __init__(self):
+        self.__dbConnector = DBConnector(os.path.join(CONFIG_PATH, 'config.json'), )
+        self.__dbConnector.connect()
+        self.__db = self.__dbConnector.get_database_name('yelp')
+        self.__client = self.__dbConnector.get_client()
+
+        logging.basicConfig(filename=os.path.join(LOG_PATH, 'import.log'), level=logging.INFO, filemode='w')
+        logging.info('Connected to MongoDB')
+
+    def __del__(self):
+        self.__dbConnector.disconnect()
+
+    def find_one(self, collection_name=''):
+        db = self.__client['yelp']
+        collection = db[collection_name]
+
+        return collection.find_one()
+
+    def find_and_update(self, query=None, updateQuery=None, collection_name=None):
+        db = self.__client['yelp']
+        collection = db[collection_name]
+
+        return collection.find_one_and_update(filter=query, update=updateQuery)
