@@ -66,7 +66,6 @@ if __name__ == '__main__':
 
     index = 0
     batch_number = 5000
-    second_batch = 1000
 
     batch_documents = [i for i in range(batch_number)]
 
@@ -96,13 +95,14 @@ if __name__ == '__main__':
 
             batch_documents[index % batch_number] = new_doc
 
-            if (index + 1) % second_batch== 0:
-                print("\n" + str(index) + "\n")
-
             if (index + 1) % batch_number == 0:
                 t_collection.insert(batch_documents)
+                print("\n" + str(index) + "\n")
             index += 1
         except:
             print 'Unexpected error:', sys.exc_info()[0], ', for index ', index
             raise
     dbConnector.disconnect()
+
+# db.review_category.aggregate([{ $unwind: "$categories"}, {$group: { _id : "$categories", count: {$sum: 1}} }, {$sort: {count: -1}}, {$limit:1}], {allowDiskUse:true})
+# db.review_category.aggregate([{ $unwind: "$categories"}, { $match : { categories : "Restaurants" } }, {$group: { _id : "$business_id", count: {$sum: 1}} }, {$sort: {count: -1}}, {$match : {count: {$lte:1000}}}, {$limit : 12}], {allowDiskUse:true})
