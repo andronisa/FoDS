@@ -93,7 +93,7 @@ class DBConnector:
 
 
 class DBCoordinator:
-    def __init__(self, db, bulk_limit=100):
+    def __init__(self, db, bulk_limit=100000):
         self.__db = db
         self.__bulk = None
         self.__bulkLimit = bulk_limit
@@ -115,6 +115,9 @@ class DBCoordinator:
         res = self.__bulk.execute()
         self.__bulk = None
         return res
+
+    def insert(self, docs):
+        self.db.insert_many(docs)
 
     def addObject(self, obj):
         return self.addObjects([obj])
@@ -253,11 +256,35 @@ class MongoQuery:
     def __del__(self):
         self.__dbConnector.disconnect()
 
-    def find_one(self, collection_name=''):
+    def find_one_by(self, collection_name='', field=tuple()):
+        db = self.__client['yelp']
+        collection = db[collection_name]
+        field_name = field[0]
+        field_value = field[1]
+
+        return collection.find_one({field_name: field_value})
+
+    def find_one(self, collection_name='', field=tuple(), fields=list()):
+        db = self.__client['yelp']
+        collection = db[collection_name]
+        field_name = field[0]
+        field_value = field[1]
+
+        projection = {}
+        for field in fields:
+            projection[field] = 1
+
+        return collection.find_one({field_name: field_value}, projection)
+
+    def find_all(self, collection_name='', fields=list()):
         db = self.__client['yelp']
         collection = db[collection_name]
 
-        return collection.find_one()
+        projection = {}
+        for field in fields:
+            projection[field] = 1
+
+        return collection.find({}, projection)
 
     def find_and_update(self, query=None, updateQuery=None, collection_name=None):
         db = self.__client['yelp']
