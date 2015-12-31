@@ -2,7 +2,8 @@ import os
 import sys
 import logging
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'FoDS')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'DS1516G4')))
+print(sys.path)
 
 from datetime import datetime
 from api import AlchemyAPI
@@ -16,7 +17,7 @@ LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '
 
 class NLPHandler(object):
     def __init__(self):
-        self.alchemy_api = AlchemyAPI()
+        self.alchemy_api = None
         self.query = MongoQuery()
         self.collection_name = 'review_category'
         self.max_reviews_per_business = 1000
@@ -169,3 +170,4 @@ if __name__ == '__main__':
     nlp_handler = NLPHandler()
     # nlp_handler.create_mixed_collection()
     nlp_handler.run_handler()
+
