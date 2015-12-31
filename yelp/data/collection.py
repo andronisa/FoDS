@@ -251,35 +251,32 @@ class MongoQuery:
         self.__db = self.__dbConnector.get_database_name('yelp')
         self.__client = self.__dbConnector.get_client()
 
-        logging.basicConfig(filename=os.path.join(LOG_PATH, 'import.log'), level=logging.INFO, filemode='w')
-        logging.info('Connected to MongoDB')
-
     def __del__(self):
         self.__dbConnector.disconnect()
 
-    def find_one_by(self, collection_name='', field=tuple()):
+    def find_one(self, collection_name='', query_list=list(),  fields=None):
         db = self.__client['yelp']
         collection = db[collection_name]
-        field_name = field[0]
-        field_value = field[1]
 
-        return collection.find_one({field_name: field_value})
+        query = {}
+        for name, value in query_list:
+            query[name] = value
 
-    def find_one(self, collection_name='', field=tuple(), fields=list()):
-        db = self.__client['yelp']
-        collection = db[collection_name]
-        field_name = field[0]
-        field_value = field[1]
+        if fields is None:
+            return collection.find_one(query)
 
         projection = {}
         for field in fields:
             projection[field] = 1
 
-        return collection.find_one({field_name: field_value}, projection)
+        return collection.find_one(query, projection)
 
-    def find_all(self, collection_name='', fields=list()):
+    def find_all(self, collection_name='', fields=None):
         db = self.__client['yelp']
         collection = db[collection_name]
+
+        if fields is None:
+            return collection.find_one({})
 
         projection = {}
         for field in fields:
@@ -287,25 +284,44 @@ class MongoQuery:
 
         return collection.find({}, projection)
 
-    def find_all_by(self, collection_name='', field=tuple(), fields=list()):
+    def find_all_by(self, collection_name='', query_list=list(),  fields=None):
         db = self.__client['yelp']
         collection = db[collection_name]
-        field_name = field[0]
-        field_value = field[1]
+
+        query = {}
+        for name, value in query_list:
+            query[name] = value
+
+        if fields is None:
+            return collection.find_one(query)
 
         projection = {}
         for field in fields:
             projection[field] = 1
 
-        return collection.find({field_name: field_value}, projection)
+        return collection.find(query, projection)
 
     def aggregate(self, collection_name='', pipe_line=list(), allow_disk_use=False):
         db = self.__client['yelp']
         collection = db[collection_name]
         return list(collection.aggregate(pipe_line, allowDiskUse=allow_disk_use))
 
-    def find_and_update(self, query=None, updateQuery=None, collection_name=None):
+    def find_and_update(self, collection_name='', query_list=list(), set_list=list()):
         db = self.__client['yelp']
         collection = db[collection_name]
 
-        return collection.find_one_and_update(filter=query, update=updateQuery, return_document=ReturnDocument.AFTER)
+        query_dict = {}
+        for name, value in query_list:
+            query_dict[name] = value
+
+        update_dict = {}
+        for field_name, field_value in set_list:
+            update_dict[field_name] = field_value
+
+        update_query = {'$set': update_dict}
+
+        return collection.find_one_and_update(
+                filter=query_dict,
+                update=update_query,
+                return_document=ReturnDocument.AFTER
+        )

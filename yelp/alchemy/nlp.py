@@ -21,6 +21,7 @@ class NLPHandler(object):
         self.query = MongoQuery()
         self.collection_name = 'review_category'
         self.max_reviews_per_business = 1000
+        self.top_businesses_limit = 10
         self.logger = logging.Logger('NLPLogger', level=logging.INFO)
         self.logger.addHandler(logging.FileHandler(filename=os.path.join(LOG_PATH, 'nlp.log'), mode='a+'))
 
@@ -42,20 +43,6 @@ class NLPHandler(object):
         else:
             raise NLPValueError('Error in sentiment analysis call: ' + response['statusInfo'])
 
-    def update_review_with_nlp_results(self, review_id, nlp_dict, coll_name):
-        self.query.find_and_update(
-            query={'review_id': review_id},
-            updateQuery={'$set': {'nlp': nlp_dict}},
-            collection_name=coll_name
-        )
-
-    def update_review_with_sentiment(self, review_id, nlp_dict, coll_name):
-        return self.query.find_and_update(
-            query={'review_id': review_id},
-            updateQuery={'$set': {'sentiment': nlp_dict}},
-            collection_name=coll_name
-        )
-
     def create_mixed_collection(self):
         db_connector = DBConnector(os.path.join(CONFIG_PATH, 'config.json'))
         db_connector.connect()
@@ -65,6 +52,7 @@ class NLPHandler(object):
         business_fields = ['business_id', 'categories']
         user_fields = ['user_id', 'elite', 'votes']
         review_fields = ['business_id', 'review_id', 'text', 'user_id', 'stars', 'date']
+
         col_name = 'review'
         documents = self.query.find_all(col_name, review_fields)
 
@@ -82,10 +70,10 @@ class NLPHandler(object):
                 stars = review_doc['stars']
                 date = review_doc['date']
 
-                business_doc = self.query.find_one('business', ('business_id', business_id), business_fields)
+                business_doc = self.query.find_one('business', [('business_id', business_id)], business_fields)
                 categories = business_doc['categories']
 
-                user_doc = self.query.find_one('user', ('user_id', user_id), user_fields)
+                user_doc = self.query.find_one('user', [('user_id', user_id)], user_fields)
                 elite = len(user_doc['elite'])
                 useful = user_doc['votes']['useful']
 
@@ -132,42 +120,77 @@ class NLPHandler(object):
         ]
         return self.query.aggregate(self.collection_name, pipeline, True)
 
-    def update_business_reviews_with_sentiment(self, business_doc):
-        reviews = list(
-            self.query.find_all_by(self.collection_name, ('business_id', business_doc['_id']), ['review_id', 'text']))
-        updated_reviews = []
-
+    def update_mixed_collection_with_sentiment(self, business_doc):
         counter = 0
-        for review in reviews:
-            review_id = review['review_id']
-            sentiment = self.get_sentiment_result(review['text'])['docSentiment']
-            updated_review = self.update_review_with_sentiment(review_id, sentiment, self.collection_name)
-            updated_reviews.append(updated_review)
-            counter += 1
 
-            if counter % 50 == 0:
+        query_list = [('business_id', business_doc['_id'])]
+        field_list = ['review_id', 'text']
+
+        reviews = list(
+                self.query.find_all_by(self.collection_name, query_list, field_list)
+        )
+
+        for review in reviews:
+            if 'sentiment' not in review:
+                review_id = review['review_id']
+
+                sentiment = self.get_sentiment_result(review['text'])['docSentiment']
+                query_list = [('review_id', review_id)]
+                set_list = [('sentiment', sentiment)]
+
+                self.query.find_and_update(self.collection_name, query_list, set_list)
+
+                counter += 1
+                if counter % 50 == 0:
+                    print(str(counter) + " reviews updated.")
+
+    # CAREFUL WITH THIS ONE!!! IT HAS MEMORY ISSUES - RUN IT MANY TIMES AND CLEAR CACHE OF PC EVERYTIME
+    # IF IT TAKES TOO MUCH TIME, IT NEEDS INDEX
+    def update_mixed_collection_with_review_votes(self):
+        counter = 0
+
+        review_fields = ['votes']
+        review_category_fields = ['review_id']
+        review_category_query = [('review_useful', {"$exists": False})]
+
+        review_categories = list(
+                self.query.find_all_by(self.collection_name, review_category_query, review_category_fields)
+        )
+
+        for review_category in review_categories:
+            review_id = review_category['review_id']
+
+            query_list = [('review_id', review_id)]
+            review = self.query.find_one('review', query_list, review_fields)
+
+            set_list = [('review_useful', review['votes']['useful'])]
+            self.query.find_and_update(self.collection_name, query_list, set_list)
+
+            counter += 1
+            if counter % 10000 == 0:
                 print(str(counter) + " reviews finished.")
 
-    def run_handler(self):
-        top_category = self.find_top_category()
-        top_ten_business_id_docs = self.find_top_businesses_of_category(top_category, 10)
 
-        for business in top_ten_business_id_docs:
-            run_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-            self.logger.info(run_time + " - Business '" + str(business['_id']) + "' started.")
+def run_handler(self):
+    top_category = self.find_top_category()
+    top_ten_business_id_docs = self.find_top_businesses_of_category(top_category, self.top_businesses_limit)
 
-            print("Starting AlchemyAPI calls. Please check nlp.log inside 'logs' folder for business_id")
+    for business in top_ten_business_id_docs:
+        run_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+        self.logger.info(run_time + " - Business '" + str(business['_id']) + "' started.")
 
-            try:
-                self.update_business_reviews_with_sentiment(business)
-                self.logger.info("Business " + str(business['_id']) + " finished.")
-            except NLPValueError as err:
-                self.logger.exception(err.message)
-                raise err
+        print("Starting AlchemyAPI calls. Please check nlp.log inside 'logs' folder for business_id")
+
+        try:
+            self.update_mixed_collection_with_sentiment(business)
+            self.logger.info("Business " + str(business['_id']) + " finished.")
+        except NLPValueError as err:
+            self.logger.exception(run_time + " - " + str(err.message))
+            raise err
 
 
 if __name__ == '__main__':
     nlp_handler = NLPHandler()
     # nlp_handler.create_mixed_collection()
-    nlp_handler.run_handler()
-
+    # nlp_handler.update_mixed_collection_with_review_votes()
+    # nlp_handler.run_handler()
