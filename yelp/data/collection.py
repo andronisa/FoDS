@@ -3,6 +3,7 @@ import os.path
 import logging
 import re
 from pymongo import MongoClient
+from pymongo.collection import ReturnDocument
 
 CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config'))
 LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))
@@ -286,8 +287,25 @@ class MongoQuery:
 
         return collection.find({}, projection)
 
+    def find_all_by(self, collection_name='', field=tuple(), fields=list()):
+        db = self.__client['yelp']
+        collection = db[collection_name]
+        field_name = field[0]
+        field_value = field[1]
+
+        projection = {}
+        for field in fields:
+            projection[field] = 1
+
+        return collection.find({field_name: field_value}, projection)
+
+    def aggregate(self, collection_name='', pipe_line=list(), allow_disk_use=False):
+        db = self.__client['yelp']
+        collection = db[collection_name]
+        return list(collection.aggregate(pipe_line, allowDiskUse=allow_disk_use))
+
     def find_and_update(self, query=None, updateQuery=None, collection_name=None):
         db = self.__client['yelp']
         collection = db[collection_name]
 
-        return collection.find_one_and_update(filter=query, update=updateQuery)
+        return collection.find_one_and_update(filter=query, update=updateQuery, return_document=ReturnDocument.AFTER)
