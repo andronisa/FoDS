@@ -4,13 +4,14 @@ $(document).ready(function (){
     console.log("Document is Ready!");
     web_socket = new WebSocket("ws://localhost:8888/ws");
     web_socket.onopen = function() {
-      console.log("socket opened");
+      appendLogMessage("socket opened");
     };
     web_socket.onmessage = function (evt) {
        console.log(evt.data);
     };
 
-    $('button').click(buttonDidClick);
+    $('button[id!="clearLogButton"]').click(buttonDidClick);
+    $('#clearLogButton').click(clearLogMessage);
 });
 
 
@@ -31,7 +32,9 @@ var Message = {
 *
 */
 function sendMessageHandler(msgObj) {
-    web_socket.send(JSON.stringify(msgObj));
+    var jsonMessage = JSON.stringify(msgObj);
+    web_socket.send(jsonMessage);
+    appendLogMessage("Send message: " + jsonMessage + " to server.");
 }
 
 function createMessageWithType(type, content) {
@@ -56,5 +59,23 @@ function buttonDidClick() {
         message = createMessageWithType(MSG_TYPE_VIS, "");
     }
 
-    sendMessageHandler(message);
+    if (message != undefined) {
+        sendMessageHandler(message);
+    }
+}
+
+function appendLogMessage(log) {
+    var logScreen = $('#logScreen');
+    var oldStr = logScreen.html();
+    var newStr = oldStr + '<br>' + log;
+    logScreen.html(newStr);
+
+    var height = parseInt($('#logScreen').height());
+    height += '';
+    $('#console').animate({scrollTop: height});
+}
+
+function clearLogMessage() {
+    var logScreen = $('#logScreen');
+    logScreen.html("");
 }
