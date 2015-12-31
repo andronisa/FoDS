@@ -5,6 +5,7 @@ import tornado.websocket
 import socket
 import urlparse
 import os
+import json
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -21,7 +22,15 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         print("WebSocket opened")
 
     def on_message(self, message):
-        self.write_message(u"You said: " + message)
+        #self.write_message(u"You said: " + message)
+        content = json.loads(message)
+        msg_type = content['MSG_TYPE']
+        if msg_type == 'import':
+            print("do import")
+        elif msg_type == 'nlp':
+            print("do nlp")
+        elif msg_type == 'visualise':
+            print("do visualisation")
 
     def on_close(self):
         print("WebSocket closed")
