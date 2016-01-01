@@ -2,3 +2,5 @@
 .idea/
 .DS_Store
 .download_cache/*
+output_images/*
+
