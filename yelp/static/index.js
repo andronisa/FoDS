@@ -5,6 +5,8 @@ $(document).ready(function (){
     web_socket = new WebSocket("ws://localhost:8888/ws");
     web_socket.onopen = function() {
       appendLogMessage("socket opened");
+      message = createMessageWithType("Greeting", "Hello World!!");
+      sendMessageHandler(message)
     };
     web_socket.onmessage = function (evt) {
        console.log(evt.data);

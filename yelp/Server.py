@@ -7,6 +7,11 @@ import urlparse
 import os
 import json
 
+from Logger import LogBroadcaster
+from FileExporter import *
+
+broadcaster = LogBroadcaster()
+
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.set_header('Content-Type', 'text/html')
@@ -16,13 +21,25 @@ class MainHandler(tornado.web.RequestHandler):
 
         self.render('index.html', SERVER_NAME=ip_address, SERVER_PORT='8888', HTTPS='off')
 
+"""
+    VISUALISATION MESSAGE:
+
+        {
+            MSG_TYPE: 'visualise',
+            count: n,
+            items: [ Array of Dictionary ImageBase64 objects ]
+        }
+
+"""
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         print("WebSocket opened")
+        broadcaster.add_subscriber(self)
 
     def on_message(self, message):
         #self.write_message(u"You said: " + message)
+        #broadcaster.broadcast_message(u"You said: " + message)
         content = json.loads(message)
         msg_type = content['MSG_TYPE']
         if msg_type == 'import':
@@ -31,9 +48,29 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             print("do nlp")
         elif msg_type == 'visualise':
             print("do visualisation")
+            image_message = self.create_image_export_message()
+            self.write_message(image_message)
 
     def on_close(self):
         print("WebSocket closed")
+        broadcaster.remove_subscriber(self)
+
+    def create_image_export_message(self):
+        json_str = ""
+        message_dct = {}
+        file_explorer = ImageExporter()
+        image_contents = file_explorer.convert_images_to_base64()
+        message_dct['MSG_TYPE'] = 'visualise'
+        message_dct['count'] = len(image_contents)
+        contents = []
+        for image_base64 in image_contents:
+            contents.append(image_base64.to_dict())
+
+        message_dct['items'] = contents
+        json_str = json.dumps(message_dct)
+
+        return json_str
+
 
 def make_app():
     settings = {
