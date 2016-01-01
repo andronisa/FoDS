@@ -20,6 +20,17 @@ h2{
 	padding: 10px;
 }
 
+.imageContainer {
+	justify-content: center;
+}
+
+.outputImage {
+	margin-top: 10px;
+	margin-bottom: 10px;
+	width: 900px;
+	height: 506px;
+}
+
 #importButton, #NLPButton, #visualiseButton {
 	width:20%;
 	background-color:#9cd1db;

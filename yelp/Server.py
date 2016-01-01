@@ -43,15 +43,16 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def on_message(self, message):
         #self.write_message(u"You said: " + message)
         #broadcaster.broadcast_message(u"You said: " + message)
-        nlp_handler.test_broadcast()
         content = json.loads(message)
         msg_type = content['MSG_TYPE']
         if msg_type == 'import':
-            print("do import")
+            pass
+            #print("do import")
         elif msg_type == 'nlp':
-            print("do nlp")
+            pass
+            #print("do nlp")
         elif msg_type == 'visualise':
-            print("do visualisation")
+            #print("do visualisation")
             image_message = self.create_image_export_message()
             self.write_message(image_message)
 

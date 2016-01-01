@@ -15,7 +15,8 @@ $(document).ready(function (){
         if (type === MSG_TYPE_BROADCAST) {
             appendLogMessage(message.content);
         } else if (type === MSG_TYPE_VIS) {
-
+            images = message.items;
+            reloadImageScreen();
         }
     };
 
@@ -24,7 +25,7 @@ $(document).ready(function (){
     textView.text("Test Console Log...");
     logScreen.append(textView);
     containers.logScreen = logScreen;
-    containers.imageScreen = $('<div id="imageScreen">');
+    containers.imageScreen = $('<div class="imageContainer" id="imageScreen">');
 
     $('button[id!="clearLogButton"]').click(buttonDidClick);
     $('#clearLogButton').click(clearLogMessage);
@@ -105,7 +106,22 @@ function updateMainScreen() {
 }
 
 function reloadImageScreen() {
+    var imageScreen = containers.imageScreen;
+    imageScreen.empty();
 
+    imageArr = [];
+    for(var i = 0; i < images.length; i++) {
+        var imageContent = images[i];
+        var imageElement = $('<img class="outputImage" />');
+        var imageSource = "data:image/";
+        imageSource = imageSource + imageContent.file_extension + ';base64, ' + imageContent.content;
+        imageElement.attr("src", imageSource);
+        imageElement.attr("id", imageContent.file_name);
+
+        imageArr.push(imageElement);
+    }
+
+    imageScreen.append(imageArr);
 }
 
 /**
