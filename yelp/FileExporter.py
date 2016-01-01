@@ -13,8 +13,9 @@ class ImageExporter(object):
 
     def list_all_images(self):
         for f in os.listdir(OUTPUT_FOLDER_PATH):
-            file_path = OUTPUT_FOLDER_PATH + '/' + f
-            yield file_path, f
+            if f.endswith(".jpg") or f.endswith(".png"):
+                file_path = OUTPUT_FOLDER_PATH + '/' + f
+                yield file_path, f
 
     def convert_images_to_base64(self):
         res = []
