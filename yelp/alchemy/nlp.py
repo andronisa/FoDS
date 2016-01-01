@@ -9,7 +9,7 @@ from datetime import datetime
 from api import AlchemyAPI
 from yelp.data.collection import MongoQuery
 from yelp.data.collection import DBConnector
-from yelp.alchemy.nlp.exception import NLPValueError
+from yelp.alchemy.nlp_exc.exception import NLPValueError
 
 CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config'))
 LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))

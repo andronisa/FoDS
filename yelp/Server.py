@@ -9,6 +9,7 @@ import json
 
 from Logger import LogBroadcaster
 from FileExporter import *
+from alchemy.nlp import NLPHandler
 
 broadcaster = LogBroadcaster()
 
