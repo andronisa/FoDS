@@ -10,6 +10,7 @@ from api import AlchemyAPI
 from yelp.data.collection import MongoQuery
 from yelp.data.collection import DBConnector
 from yelp.alchemy.nlp_exc.exception import NLPValueError
+from Logger import LogBroadcaster
 
 CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config'))
 LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))
@@ -24,6 +25,11 @@ class NLPHandler(object):
         self.top_businesses_limit = 10
         self.logger = logging.Logger('NLPLogger', level=logging.INFO)
         self.logger.addHandler(logging.FileHandler(filename=os.path.join(LOG_PATH, 'nlp.log'), mode='a+'))
+        self.__broadcaster = None
+
+    def set_broadcaster(self, b):
+        self.__broadcaster = b
+        #self.__broadcaster.broadcast_message("Test log...")
 
     def get_combined_result(self, review_text=''):
         opts = {

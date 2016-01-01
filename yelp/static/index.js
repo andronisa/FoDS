@@ -4,16 +4,41 @@ $(document).ready(function (){
     console.log("Document is Ready!");
     web_socket = new WebSocket("ws://localhost:8888/ws");
     web_socket.onopen = function() {
-      appendLogMessage("socket opened");
-      message = createMessageWithType("Greeting", "Hello World!!");
-      sendMessageHandler(message)
+        appendLogMessage("socket opened");
+        //message = createMessageWithType("Greeting", "Hello World!!");
+        //sendMessageHandler(message)
     };
     web_socket.onmessage = function (evt) {
-       console.log(evt.data);
+        console.log(evt.data);
+        var message = JSON.parse(evt.data);
+        var type = message.MSG_TYPE;
+        if (type === MSG_TYPE_BROADCAST) {
+            appendLogMessage(message.content);
+        } else if (type === MSG_TYPE_VIS) {
+
+        }
     };
+
+    var logScreen = $('<div id="console">');
+    var textView = $('<p id="logScreen">');
+    textView.text("Test Console Log...");
+    logScreen.append(textView);
+    containers.logScreen = logScreen;
+    containers.imageScreen = $('<div id="imageScreen">');
 
     $('button[id!="clearLogButton"]').click(buttonDidClick);
     $('#clearLogButton').click(clearLogMessage);
+
+    $("input[type=radio]").change(function() {
+       displayMode = $(this).val();
+       updateMainScreen();
+    });
+
+    $("input[type=radio]").each(function() {
+        $(this).prop("checked", $(this).val() === displayMode);
+    });
+
+    updateMainScreen();
 });
 
 
@@ -21,13 +46,28 @@ $(document).ready(function (){
     GLOBAL STRING VARIBLES
 */
 var web_socket = undefined;
+var MSG_TYPE = 'MSG_TYPE'
 var MSG_TYPE_IMPORT = "import";
 var MSG_TYPE_NLP = "nlp";
 var MSG_TYPE_VIS = "visualise";
+var MSG_TYPE_BROADCAST = "broadcast";
 var Message = {
     MSG_TYPE: "",
     content: undefined
 };
+
+var DisplayType = {
+    log: 'log',
+    image: 'image'
+};
+var displayMode = DisplayType.log;
+
+var containers = {
+    logScreen: undefined,
+    imageScreen: undefined
+};
+
+var images = [];
 
 /**
 *  This is Message Handler
@@ -44,6 +84,28 @@ function createMessageWithType(type, content) {
     newMsg.MSG_TYPE = type;
     newMsg.content = content;
     return newMsg;
+}
+
+/**
+    Private Methods
+*/
+
+function updateMainScreen() {
+    var mainScreen = $("#mainScreen");
+    mainScreen.empty();
+
+    if (displayMode === DisplayType.log) {
+        mainScreen.append(containers.logScreen);
+        var height = parseInt($('#logScreen').height());
+        height += '';
+        $('#console').animate({scrollTop: height});
+    } else if (displayMode === DisplayType.image) {
+        mainScreen.append(containers.imageScreen);
+    }
+}
+
+function reloadImageScreen() {
+
 }
 
 /**

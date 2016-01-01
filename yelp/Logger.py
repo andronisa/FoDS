@@ -1,6 +1,7 @@
 __author__ = 'Adisorn'
 
 import tornado.websocket
+import json
 
 class LogBroadcaster(object):
 
@@ -15,8 +16,13 @@ class LogBroadcaster(object):
         self.__subscribers.remove(web_socket)
 
     def broadcast_message(self, message):
+        message_dct = dict()
+        message_dct['MSG_TYPE'] = 'broadcast'
+        message_dct['content'] = message
+        json_str = json.dumps(message_dct)
+
         for web_socket in self.subscribers:
-            web_socket.write_message(message)
+            web_socket.write_message(json_str)
 
     @property
     def subscribers(self):

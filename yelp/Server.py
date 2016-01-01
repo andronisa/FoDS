@@ -12,6 +12,8 @@ from FileExporter import *
 from alchemy.nlp import NLPHandler
 
 broadcaster = LogBroadcaster()
+nlp_handler = NLPHandler()
+nlp_handler.set_broadcaster(broadcaster)
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -41,6 +43,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def on_message(self, message):
         #self.write_message(u"You said: " + message)
         #broadcaster.broadcast_message(u"You said: " + message)
+        nlp_handler.test_broadcast()
         content = json.loads(message)
         msg_type = content['MSG_TYPE']
         if msg_type == 'import':
