@@ -2,15 +2,14 @@ import os
 import sys
 import logging
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'DS1516G4')))
-print(sys.path)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'FoDS')))
 
 from datetime import datetime
 from api import AlchemyAPI
 from yelp.data.collection import MongoQuery
 from yelp.data.collection import DBConnector
 from yelp.alchemy.nlp_exc.exception import NLPValueError
-from Logger import LogBroadcaster
+# from Logger import LogBroadcaster
 
 CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config'))
 LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))
@@ -18,7 +17,7 @@ LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '
 
 class NLPHandler(object):
     def __init__(self):
-        self.alchemy_api = None
+        self.alchemy_api = AlchemyAPI()
         self.query = MongoQuery()
         self.collection_name = 'review_category'
         self.max_reviews_per_business = 1000
@@ -176,23 +175,22 @@ class NLPHandler(object):
             if counter % 10000 == 0:
                 print(str(counter) + " reviews finished.")
 
+    def run_handler(self):
+        top_category = self.find_top_category()
+        top_ten_business_id_docs = self.find_top_businesses_of_category(top_category, self.top_businesses_limit)
 
-def run_handler(self):
-    top_category = self.find_top_category()
-    top_ten_business_id_docs = self.find_top_businesses_of_category(top_category, self.top_businesses_limit)
+        for business in top_ten_business_id_docs:
+            run_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+            self.logger.info(run_time + " - Business '" + str(business['_id']) + "' started.")
 
-    for business in top_ten_business_id_docs:
-        run_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-        self.logger.info(run_time + " - Business '" + str(business['_id']) + "' started.")
+            print("Starting AlchemyAPI calls. Please check nlp.log inside 'logs' folder for business_id")
 
-        print("Starting AlchemyAPI calls. Please check nlp.log inside 'logs' folder for business_id")
-
-        try:
-            self.update_mixed_collection_with_sentiment(business)
-            self.logger.info("Business " + str(business['_id']) + " finished.")
-        except NLPValueError as err:
-            self.logger.exception(run_time + " - " + str(err.message))
-            raise err
+            try:
+                self.update_mixed_collection_with_sentiment(business)
+                self.logger.info("Business " + str(business['_id']) + " finished.")
+            except NLPValueError as err:
+                self.logger.exception(run_time + " - " + str(err.message))
+                raise err
 
 
 if __name__ == '__main__':
