@@ -82,7 +82,7 @@ for i in cursor:
 		# print mnstr
 		
 		if month != 0:
-			revStatsData.append([month, negatives, neutrals, positives])
+			revStatsData.append([month, negatives, neutrals, positives, mnstr])
 		
 		mnstr = i["date"][0:7]
 		month += 1
