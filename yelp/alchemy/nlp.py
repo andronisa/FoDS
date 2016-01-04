@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import json
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'FoDS')))
 
@@ -9,11 +10,15 @@ from api import AlchemyAPI
 from yelp.data.collection import MongoQuery
 from yelp.data.collection import DBConnector
 from yelp.alchemy.nlp_exc.exception import NLPValueError
+from yelp.alchemy.AchelmyDataStore import AchelmyStore
+
+from pprint import pprint
 # from Logger import LogBroadcaster
 
 CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config'))
 LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))
 
+BUS_ID = ''
 
 class NLPHandler(object):
     def __init__(self):
@@ -192,9 +197,120 @@ class NLPHandler(object):
                 self.logger.exception(run_time + " - " + str(err.message))
                 raise err
 
+    def run2_handler(self):
+        acm = AchelmyStore()
+        business_id = BUS_ID
+        limit = 200
+        uncalled_ids = acm.get_uncalled_review_ids(business_id, limit)
+
+        run_info = {}
+        run_info['run_date'] = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+
+        #dbc.find({"business_id": "zTCCbg7mGslxACL5KlAPIQ"}).sort("date", 1).limit(20)
+        query_list = [('business_id', "zTCCbg7mGslxACL5KlAPIQ"), ('review_id', {'$in': uncalled_ids})]
+        projections = ['review_id', 'text']
+        documents = self.query.find_all_by('review_category', query_list, projections)
+
+        total_reviews = documents.count()
+        run_info['total_review'] = total_reviews
+        success = 0
+        failure_reviews = []
+
+        print("get uncalled review: {}".format(documents.count()))
+        i = 0
+        for doc in documents:
+            #pprint(doc)
+            review_id = doc['review_id']
+
+            result = self.get_combined_result(doc['text'])
+            if type(result) == 'NLPValueError': # fail
+                failure_reviews.append(review_id)
+            else:
+                data = dict()
+                val = None
+                if 'entities'in result:
+                    val = result['entities']
+                else:
+                    val = []
+
+                data['entities'] = val
+
+                if 'concepts'in result:
+                    val = result['concepts']
+                else:
+                    val = []
+
+                data['concepts'] = val
+
+                if 'keywords'in result:
+                    val = result['keywords']
+                else:
+                    val = []
+
+                data['keywords'] = val
+
+                if 'taxonomy'in result:
+                    val = result['taxonomy']
+                else:
+                    val = []
+
+                data['taxonomy'] = val
+
+                query_list = [('review_id', review_id)]
+                set_list = [('combined_result', data)]
+
+                self.query.find_and_update('review_category', query_list, set_list)
+
+                acm.add_called_review_ids(business_id, [review_id])
+
+                if success % 50 == 0:
+                    print(str(success) + " reviews updated.")
+
+                success += 1
+                #pprint(result)
+
+            i += 1
+            if i == limit:
+                break
+
+        run_info['success'] = success
+        run_info['fail'] = total_reviews - success
+        if success != total_reviews:
+            run_info['failure_ids'] = failure_reviews
+
+        pprint(run_info)
+
+        with open('./run2_log.txt', 'w+') as outfile:
+            json.dump(run_info, outfile, indent=4, ensure_ascii=False)
+
+
+        """
+        result = self.get_combined_result(doc['text'])
+        print(result)
+
+        """
+
+    def tee_perform(self):
+        #['u-Gbz-uGIIKC0SN2MwXtLw', 'FyCc8g7LCVpU4BGCz-WUog']
+        review_id = 'FyCc8g7LCVpU4BGCz-WUog'
+        query_list = [('review_id', review_id)]
+        projections = ['review_id', 'text']
+        review = self.query.find_one('review_category', query_list, projections)
+
+        if review is not None:
+            sentiment_res = self.get_sentiment_result(review['text'])
+            pprint(sentiment_res)
+            sentiment = self.get_sentiment_result(review['text'])['docSentiment']
+            query_list = [('review_id', review_id)]
+            set_list = [('sentiment', sentiment)]
+
+            self.query.find_and_update(self.collection_name, query_list, set_list)
+
 
 if __name__ == '__main__':
     nlp_handler = NLPHandler()
     # nlp_handler.create_mixed_collection()
     # nlp_handler.update_mixed_collection_with_review_votes()
     # nlp_handler.run_handler()
+    #nlp_handler.tee_perform()
+    nlp_handler.run2_handler()
