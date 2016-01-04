@@ -18,14 +18,15 @@ def get_results():
         print ("Connected.")
 
     # change dbc values to the ones appropriate for your setup.
-    dbc = client.yelp.review_category  # ...
+    # dbc = client.yelp.review_category  # ...
+	dbc = client.mongo2.review_1 
     
     # Query database - get data in ascending date.
     
     client.close()
     print "Disconnected."
 
-    return list(dbc.find({"business_id": "zTCCbg7mGslxACL5KlAPIQ"}).sort("date", 1))
+    return list(dbc.find({"business_id": "zTCCbg7mGslxACL5KlAPIQ"}).sort("date", 1).limit(5))
     
 
 
