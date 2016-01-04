@@ -24,7 +24,7 @@ else:
 
 # change dbc values to the ones appropriate for your setup.
 
-dbc = client.mongo2.review_1  # ...
+dbc = client.mongo2.review_2  # ...
 
 
 # Query database - get data in ascendiong date.
@@ -98,7 +98,7 @@ for i in cursor:
 				neutrals = neutrals + 1
 		except KeyError:
 			neednlp.append(i["review_id"])
-revStatsData.append([month, negatives, neutrals, positives])
+revStatsData.append([month, negatives, neutrals, positives, mnstr])
 			
 print revStatsData
 
