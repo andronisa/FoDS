@@ -18,11 +18,12 @@ class AchelmyStore:
         self.__db = self.__dbConnector.get_database_name(DATABASE_NAME, 'achelmy_calls')
         self.__client = self.__dbConnector.get_client()
 
-    def get_uncalled_review_ids(self, business_id='', n=200):
+    def get_uncalled_ids(self, business_id='', n=200, mode=0):# mode 0 = sentiment, 1 = combined
         db = self.__client[DATABASE_NAME]
         collection = db['review_category']
 
-        achelmy_collection = db['achelmy_calls']
+        achelmy_collection_name = 'achelmy_combined_calls' if mode == 0 else 'achelmy_calls'
+        achelmy_collection = db[achelmy_collection_name]
         called_review_result = achelmy_collection.find_one({'business_id': business_id})
 
         review_ids = []
@@ -51,6 +52,12 @@ class AchelmyStore:
 
         print("get: {} unique objects".format(len(res)))
         return res
+
+    def get_uncalled_sentiment_review_ids(self, business_id='', n=200):
+        return self.get_uncalled_ids(business_id, n, 0)
+
+    def get_uncalled_combined_review_ids(self, business_id='', n=200):
+        return self.get_uncalled_ids(business_id, n, 1)
 
     def add_called_review_ids(self, business_id='', called_ids=[]):
         db = self.__client[DATABASE_NAME]

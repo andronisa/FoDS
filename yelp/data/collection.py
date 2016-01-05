@@ -71,6 +71,10 @@ class DBConnector:
 
         return db
 
+    def get_collection(self, db_name='test', collection_name='yelps'):
+        collection = self.__client[db_name][collection_name]
+        return collection
+
     def reset_database_name(self, db_name='test', collection_name='yelps'):
         collection = self.__client[db_name][collection_name]
         return collection.drop()
