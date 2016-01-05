@@ -3,13 +3,14 @@ def DataClean(file_name):
 	my_file1 = open (file_name,"r+")
 	my_file2 = open ("./cleaned_dataset/" + "cleaned_" + file_name ,"w+")
 	
-
 	while 1:		
 		data = my_file1.readline()
 		#clean
 		if not data :
 			break
 		data_dict = json.loads(data)
+		
+		error = 0
 		
 		for key in data_dict:
 			#for business:
@@ -58,9 +59,11 @@ def DataClean(file_name):
 			if key == 'user_id':
 				pass
 			if key == 'review_id':
-				pass
+				if '-' in data_dict['review_id']:
+					error = error + 1
 			if key == 'text':
-				pass
+				if '\n' in data_dict['text']:
+					error = error + 1	
 			if key == 'business_id':
 				pass
 			if key == 'stars':
@@ -110,11 +113,9 @@ def DataClean(file_name):
 	
 
 		data_str =  json.dumps(data_dict)
-		
-		my_file2.write(data_str)
+		if error == 0:
+			my_file2.write(data_str)
 
 	my_file1.close()
 	my_file2.close()
 
-
-DataClean('yelp_academic_dataset_business.json')

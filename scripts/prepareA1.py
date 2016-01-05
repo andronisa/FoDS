@@ -26,7 +26,7 @@ cursor = dbc.find({"business_id": "zTCCbg7mGslxACL5KlAPIQ"}).sort("date", 1)#.li
 
 # print cursor.count()
 # 987 reviews.
-"
+
 sentiment = []
 
 for i in cursor:
