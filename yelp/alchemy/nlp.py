@@ -18,7 +18,7 @@ from pprint import pprint
 CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config'))
 LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))
 
-BUS_ID = 'zTCCbg7mGslxACL5KlAPIQ'
+BUS_ID = 'KjymOs12Mpy0Kd54b7T9MA'
 
 class NLPHandler(object):
     def __init__(self):
@@ -143,16 +143,21 @@ class NLPHandler(object):
         for review in reviews:
             if 'sentiment' not in review:
                 review_id = review['review_id']
+                sentiment = None
+                try:
+                    sentiment = self.get_sentiment_result(review['text'])['docSentiment']
+                except NLPValueError as err:
+                    print("{} is having problem with err: {}".format(review_id, err.message))
 
-                sentiment = self.get_sentiment_result(review['text'])['docSentiment']
-                query_list = [('review_id', review_id)]
-                set_list = [('sentiment', sentiment)]
+                if sentiment != None:
+                    query_list = [('review_id', review_id)]
+                    set_list = [('sentiment', sentiment)]
 
-                self.query.find_and_update(self.collection_name, query_list, set_list)
+                    self.query.find_and_update(self.collection_name, query_list, set_list)
 
-                counter += 1
-                if counter % 50 == 0:
-                    print(str(counter) + " reviews updated.")
+                    counter += 1
+                    if counter % 50 == 0:
+                        print(str(counter) + " reviews updated.")
 
     def print_uncalled_top_ten_business(self):
         top_category = self.find_top_category()
@@ -215,20 +220,16 @@ class NLPHandler(object):
                 self.logger.info("Business " + str(business['_id']) + " finished.")
             except NLPValueError as err:
                 self.logger.exception(run_time + " - " + str(err.message))
-                raise err
 
     def run2_handler(self):
-        acm = AchelmyStore()
         business_id = BUS_ID
         limit = 200
-        uncalled_ids = acm.get_uncalled_combined_review_ids(business_id, limit)
-
         run_info = {}
         run_info['run_date'] = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
 
         #dbc.find({"business_id": "zTCCbg7mGslxACL5KlAPIQ"}).sort("date", 1).limit(20)
-        query_list = [('business_id', "zTCCbg7mGslxACL5KlAPIQ"), ('review_id', {'$in': uncalled_ids})]
-        projections = ['review_id', 'text']
+        query_list = [('business_id', business_id)]
+        projections = ['review_id', 'text', 'combined_result']
         documents = self.query.find_all_by('review_category', query_list, projections)
 
         total_reviews = documents.count()
@@ -239,8 +240,10 @@ class NLPHandler(object):
         print("get uncalled review: {}".format(documents.count()))
         i = 0
         for doc in documents:
-            #pprint(doc)
             review_id = doc['review_id']
+
+            if 'combined_result' in doc:
+                continue
 
             result = self.get_combined_result(doc['text'])
             if type(result) == 'NLPValueError': # fail
@@ -280,8 +283,6 @@ class NLPHandler(object):
                 set_list = [('combined_result', data)]
 
                 self.query.find_and_update('review_category', query_list, set_list)
-
-                acm.add_called_review_ids(business_id, [review_id])
 
                 if success % 50 == 0:
                     print(str(success) + " reviews updated.")
@@ -332,6 +333,6 @@ if __name__ == '__main__':
     # nlp_handler.create_mixed_collection()
     # nlp_handler.update_mixed_collection_with_review_votes()
     #nlp_handler.run_handler()
-    nlp_handler.print_uncalled_top_ten_business()
+    #nlp_handler.print_uncalled_top_ten_business()
     #nlp_handler.tee_perform()
-    #nlp_handler.run2_handler()
+    nlp_handler.run2_handler()

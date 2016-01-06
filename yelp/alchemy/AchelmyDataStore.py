@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 from yelp.data.collection import *
 
 DATABASE_NAME = 'yelp'
-BUS_ID = 'zTCCbg7mGslxACL5KlAPIQ'
+BUS_ID = 'KjymOs12Mpy0Kd54b7T9MA'
 
 class AchelmyStore:
 
