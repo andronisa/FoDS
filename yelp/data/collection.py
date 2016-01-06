@@ -305,6 +305,12 @@ class MongoQuery:
 
         return collection.find(query, projection)
 
+    def count(self, collection_name=''):
+        db = self.__client['yelp']
+        collection = db[collection_name]
+
+        return collection.count()
+
     def aggregate(self, collection_name='', pipe_line=list(), allow_disk_use=False):
         db = self.__client['yelp']
         collection = db[collection_name]
