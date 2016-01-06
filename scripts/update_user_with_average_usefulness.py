@@ -55,7 +55,7 @@ class UserUpdater:
             if counter % 1000 == 0:
                 print(str(counter) + " users updated.")
 
-        self.logger.info("Execution finished. " + counter + " users updated.")
+        self.logger.info("Execution finished. " + str(counter) + " users updated.")
         return users
 
     @staticmethod
