@@ -280,7 +280,7 @@ class MongoQuery:
         collection = db[collection_name]
 
         if fields is None:
-            return collection.find_one({})
+            return collection.find({})
 
         projection = {}
         for field in fields:
@@ -297,7 +297,7 @@ class MongoQuery:
             query[name] = value
 
         if fields is None:
-            return collection.find_one(query)
+            return collection.find(query)
 
         projection = {}
         for field in fields:
