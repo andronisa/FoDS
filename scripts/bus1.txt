@@ -1,0 +1,8 @@
+{u'Italian food':
+u'carving station':
+u'crawfish'
+u'dinner buffet':
+u'dumplings':
+u'gravy': x2
+u'meal':
+u'thanks': x2

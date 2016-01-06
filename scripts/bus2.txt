@@ -1,0 +1,17 @@
+bartenders + 
+night + +
+town + +
+entrees + + + + 
+music + 
+Bellagio water + + 
+prices + + + + 
+restaurant
+party + + 
+pastas
+prosciutto flatbread + + + 
+carpaccio
+mushroom flatbread
+special occasion + + 
+Service
+squid + 
+lamb chops
